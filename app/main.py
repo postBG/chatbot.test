@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, Union, List
 
 import uvicorn
+from pydantic import BaseModel
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -8,6 +9,13 @@ from fastapi.templating import Jinja2Templates
 
 from html_utils import build_html_chat
 from model import ChatBot
+
+
+class ChatBotInput(BaseModel):
+    model_name: str
+    message: str
+    history: List[str] = []
+
 
 app = FastAPI()
 
@@ -17,6 +25,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # locates the template files that will be modified at run time
 # with the dialog form the user and bot
 templates = Jinja2Templates(directory="templates")
+
+
+@app.post("/test/")
+async def test(chatbot_input: ChatBotInput):
+    decoded_message = chatbot.get_reply(chatbot_input.message)
+    return {"answer": decoded_message}
 
 
 @app.post("/", response_class=HTMLResponse)
