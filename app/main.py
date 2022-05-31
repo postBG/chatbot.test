@@ -9,7 +9,6 @@ from pydantic import BaseModel
 
 from app.models import chatbot_factory
 from html_utils import build_html_chat
-from model import ChatBot
 
 
 class ChatBotInput(BaseModel):
@@ -28,17 +27,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-@app.post("/test/")
-async def test(chatbot_input: ChatBotInput):
-    created_chatbot = chatbot_factory({"model_name": chatbot_input.model_name})
-    decoded_message = created_chatbot.get_reply(chatbot_input.message)
-    return {"answer": decoded_message}
-
-
 @app.post("/", response_class=HTMLResponse)
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request, message: Optional[str] = Form(None)):
     # if the Form is not None, then get a reply from the bot
+    chatbot = chatbot_factory({"model_name": "microsoft/DialoGPT-large"})
     if message is not None:
 
         # gets a response of the AI bot
@@ -62,7 +55,13 @@ async def root(request: Request, message: Optional[str] = Form(None)):
     return templates.TemplateResponse("index.html", message_dict)
 
 
+@app.post("/chatbot")
+async def chatbot(chatbot_input: ChatBotInput):
+    created_chatbot = chatbot_factory({"model_name": chatbot_input.model_name})
+    decoded_message = created_chatbot.get_reply(chatbot_input.message)
+    return {"answer": decoded_message}
+
+
 # initialises the chatbot model and starts the uvicorn app
 if __name__ == "__main__":
-    chatbot = ChatBot()
     uvicorn.run(app, host="0.0.0.0", port=8000)
