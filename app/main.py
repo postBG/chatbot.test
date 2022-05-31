@@ -1,12 +1,13 @@
-from typing import Optional, Union, List
+from typing import Optional, List
 
 import uvicorn
-from pydantic import BaseModel
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 
+from app.models import chatbot_factory
 from html_utils import build_html_chat
 from model import ChatBot
 
@@ -29,7 +30,8 @@ templates = Jinja2Templates(directory="templates")
 
 @app.post("/test/")
 async def test(chatbot_input: ChatBotInput):
-    decoded_message = chatbot.get_reply(chatbot_input.message)
+    created_chatbot = chatbot_factory({"model_name": chatbot_input.model_name})
+    decoded_message = created_chatbot.get_reply(chatbot_input.message)
     return {"answer": decoded_message}
 
 
